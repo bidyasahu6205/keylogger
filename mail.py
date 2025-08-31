@@ -41,7 +41,7 @@ def send_email(reciever,sub,body):
         print(f"Error: {e}")
        
 # if __name__ == "__main__":
-#     reciever = "bidya.gca@gmail.com"
+#     reciever = "reciever_mail@gmail.com"
 #     sub = "Testing email"
 #     body = "I hope you recieve it then i will modify it to send the file along with it"
 #     send_email(reciever,sub,body)
